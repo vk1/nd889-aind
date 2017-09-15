@@ -25,7 +25,7 @@ def naked_twins(values):
     """
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
-
+    pass
     
 
 def cross(A, B):
@@ -35,7 +35,7 @@ def cross(A, B):
     """
     return [s+t for s in A for t in B]
 
-def get_diag_units():
+def get_diag_units(rows, cols):
     """Return diagonal units of grid
 
     Returns:
@@ -183,20 +183,35 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
-    pass
+    values = grid_values(grid)
 
-rows = 'ABCDEFGHI'
-cols = '123456789'
+    return search(values)
 
-boxes = cross(rows, cols)
+def grid_structure():
+    """
+    Set the grid structure and components
 
-row_units = [cross(r, cols) for r in rows]
-column_units = [cross(rows, c) for c in cols]
-square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-diag_units = get_diag_units()
-unitlist = row_units + column_units + square_units + diag_units
-units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+    Returns:
+        Variables used by rest of the script
+    """
+    rows = 'ABCDEFGHI'
+    cols = '123456789'
+
+    boxes = cross(rows, cols)
+
+    row_units = [cross(r, cols) for r in rows]
+    column_units = [cross(rows, c) for c in cols]
+    square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+    diag_units = get_diag_units(rows, cols)
+    unitlist = row_units + column_units + square_units + diag_units
+
+    units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+    peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+
+    return rows, cols, boxes, unitlist, units, peers
+
+rows, cols, boxes, unitlist, units, peers = grid_structure()
+
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
