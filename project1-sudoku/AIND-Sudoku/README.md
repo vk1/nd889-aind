@@ -3,11 +3,11 @@
 
 # Question 1 (Naked Twins)
 Q: How do we use constraint propagation to solve the naked twins problem?  
-A: *Student should provide answer here*
+A: This is implemented within the reduce_puzzle() function, where we make sure that after each iteration of implenenting the naked twins algorithm of ensuring the twin values don't show in other boxes of the same unit (as well as other strategies), that either the solution is found or a check is in place for stalling.
 
 # Question 2 (Diagonal Sudoku)
 Q: How do we use constraint propagation to solve the diagonal sudoku problem?  
-A: *Student should provide answer here*
+A: This is done by adding the diagonals as additional units to the units list. So at every point where we check for certain criteria (all numbers 1-9 present once) to be met within a unit (row, column or 3x3 box), we are now also checking for the diagonals in much the same way as before.
 
 ### Install
 

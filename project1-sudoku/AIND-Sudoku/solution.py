@@ -184,9 +184,9 @@ def only_choice(values):
 
 def reduce_puzzle(values):
     """
-    Iterate eliminate() and only_choice(). If at some point, there is a box with no available values, return False.
+    Iterate eliminate(), only_choice() and naked_twins(). If at some point, there is a box with no available values, return False.
     If the sudoku is solved, return the sudoku.
-    If after an iteration of both functions, the sudoku remains the same, return the sudoku.
+    If after an iteration of all functions, the sudoku remains the same, return the sudoku.
     Input: A sudoku in dictionary form.
     Output: The resulting sudoku in dictionary form.
 
