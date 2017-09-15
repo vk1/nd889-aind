@@ -25,9 +25,70 @@ def naked_twins(values):
     """
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
-    pass
-    
+    new_values = values.copy()
 
+    # List of boxes to modify
+    unit_items_to_change = []
+
+    # Loop over all units
+    for unit in unitlist:
+        
+        # Loop over all boxes within a unit
+        for unit_box in unit:
+
+            # Make sure length of the string value is 2 to meet twin criteria
+             if len(values[unit_box]) == 2:
+
+                # For each such box, go over all boxes in unit to check if values match
+                for choice_box in unit:
+
+                    # Obviously ignore itself
+                    if choice_box != unit_box:
+
+                        # If values match, identical twin is found!
+                        if values[choice_box] == values[unit_box]:
+
+                            # Identical twin found. Now remove these values from other unit boxes
+                            unit_items_to_change.extend(_naked_twins_removal(values, unit, choice_box, unit_box))
+
+    # Now go through list of boxes that need to be modified and replace the twin's options with an empty string
+    for item_to_change in unit_items_to_change:
+        new_values[item_to_change[0]] = new_values[item_to_change[0]].replace(item_to_change[1], '')
+
+    return new_values
+
+def _naked_twins_removal(values, unit, twin_1, twin_2):
+    """
+    Create list of boxes to modify based on identical twins within a unit
+
+    Args:
+        values (dict): a dictionary of the grid of the form {'box_name': '123456789', ...}
+        unit (list): list of boxes in unit
+        twin_1 (string): first twin
+        twin_2 (string): second twin
+
+    Returns:
+        unit_items_to_change (list): List of boxes to modify from unit, in the form
+                                     [[box (str), value to remove from options (str)], ...]
+    """
+    unit_items_to_change = []
+
+    # Loop over all boxes within unit
+    for unit_box in unit:
+
+        # Ignore the twins as these are not to be modified
+        if unit_box not in (twin_1, twin_2):
+
+            # Go over both values of the twin one-by-one
+            for v in values[twin_1]: # 'twin_1' arbitrarily chosen here. Same values as 'twin_2'
+
+                # If any other box in the same unit has a value found in twin_1/twin_2,
+                #   then add to the list of boxes that need to be modified
+                if v in values[unit_box]:
+                    unit_items_to_change.append([unit_box, v])
+
+    return unit_items_to_change
+    
 def cross(A, B):
     """Cross product of elements in A and elements in B.
 
@@ -100,7 +161,6 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            # values[peer] = values[peer].replace(digit,'')
             values = assign_value(values, peer, values[peer].replace(digit,''))
     return values
 
@@ -119,7 +179,6 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                # values[dplaces[0]] = digit
                 values = assign_value(values, dplaces[0], digit)
     return values
 
@@ -141,6 +200,8 @@ def reduce_puzzle(values):
         values = eliminate(values)
         # Use the Only Choice Strategy
         values = only_choice(values)
+        # Use the Naked Twins Strategy
+        values = naked_twins(values)
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         # If no new values were added, stop the loop.
@@ -193,6 +254,8 @@ def grid_structure():
 
     Returns:
         Variables used by rest of the script
+
+    (Using utils.py from course page)
     """
     rows = 'ABCDEFGHI'
     cols = '123456789'
@@ -202,7 +265,11 @@ def grid_structure():
     row_units = [cross(r, cols) for r in rows]
     column_units = [cross(rows, c) for c in cols]
     square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+
+    # Fetch the additional diagonal units
     diag_units = get_diag_units(rows, cols)
+
+    # Add the 2 new diagonal units to the units list
     unitlist = row_units + column_units + square_units + diag_units
 
     units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
