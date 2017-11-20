@@ -317,10 +317,15 @@ class AlphaBetaPlayer(IsolationPlayer):
         # in case the search fails due to timeout
         best_move = (-1, -1)
 
+        # Initialize depth
+        depth = self.search_depth
+
         try:
             # The try/except block will automatically catch the exception
             # raised when the timer is about to expire.
-            return self.alphabeta(game, self.search_depth)
+            while True:
+                best_move = self.alphabeta(game, depth)
+                depth += 1
 
         except SearchTimeout:
             pass  # Handle any actions required after timeout as needed
@@ -380,15 +385,20 @@ class AlphaBetaPlayer(IsolationPlayer):
         # raise NotImplementedError
 
         # return game.get_legal_moves()[0]
-        v = self.max_value(game, depth-1, alpha, beta)
 
-        # fv = game.forecast_move(v)
+        best_move = (-1, -1)
+        best_score = float("-inf")
+
+        if depth == 0:
+            return self.score(game, self)
 
         for a in game.get_legal_moves():
-            if self.min_value(game.forecast_move(a), depth-1, alpha, beta) == v:
-                return a
-        # return max(game.get_legal_moves(),
-        #            key=lambda a: self.min_value(game.forecast_move(a), depth - 1, alpha, beta))
+            v = self.min_value(game.forecast_move(a), depth-1, alpha, beta)
+            if v > best_score:
+                best_score = v
+                best_move = a
+            alpha = max(alpha, v)
+        return best_move
 
     def terminal_test(self, game):
         """ Return True if the game is over for the active player
