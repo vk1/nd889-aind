@@ -76,8 +76,29 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        # DONE implement model selection based on BIC scores
+
+        n_components = range(self.min_n_components, self.max_n_components + 1)
+
+        scores_all = []
+
+        for n_component in n_components:
+            try:
+                current_model = self.base_model(n_component)
+                logL = current_model.score(self.X, self.lengths)
+                p = n_component*(n_component-1) + 2*n_component*current_model.n_features
+                logN = np.log(n_component)
+                score = -2*logL + p*logN
+                scores_all.append(score)
+
+            except:
+                pass
+
+        if scores_all:
+            best_n_component = max(zip(n_components, scores_all), key=lambda x: x[1])[0]
+            return self.base_model(best_n_component)
+        else:
+            return self.base_model(self.n_constant)
 
 
 class SelectorDIC(ModelSelector):
@@ -93,8 +114,41 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        # DONE implement model selection based on DIC scores
+
+        n_components = range(self.min_n_components, self.max_n_components + 1)
+        M = len(n_components)
+
+        scores_all = []
+        log_P_X_all = []
+        sum_log_P_X_all = 0
+
+        for n_component in n_components:
+            try:
+                # log(P(X(i))
+                log_P_X_i = self.base_model(n_component).score(self.X, self.lengths)
+
+                log_P_X_all.append(log_P_X_i)
+
+                # SUM(log(P(X(all but i))
+                sum_log_P_X_all += log_P_X_i
+
+            except:
+                pass
+
+        for log_P_X_i in log_P_X_all:
+            try:
+                score = log_P_X_i - 1/(M-1)*(sum_log_P_X_all-log_P_X_i)
+                scores_all.append(score)
+
+            except:
+                pass
+
+        if scores_all:
+            best_n_component = max(zip(n_components, scores_all), key=lambda x: x[1])[0]
+            return self.base_model(best_n_component)
+        else:
+            return self.base_model(self.n_constant)
 
 
 class SelectorCV(ModelSelector):
@@ -105,5 +159,35 @@ class SelectorCV(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        # DONE implement model selection using CV
+
+        split_method = KFold()
+
+        scores_mean_all = []
+
+        n_components = range(self.min_n_components, self.max_n_components + 1)
+
+        for n_component in n_components:
+            try:
+
+                scores_model = []
+                score_mean_model = None
+
+                for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+                    X_test, X_lengths = combine_sequences(cv_test_idx, self.sequences)
+
+                    scores_model.append(self.base_model(n_component).score(X_test, X_lengths))
+
+                    score_mean_model = np.mean(scores_model)
+
+                if score_mean_model:
+                    scores_mean_all.append(score_mean_model)
+
+            except:
+                pass
+
+        if scores_mean_all:
+            best_n_component = max(zip(n_components, scores_mean_all), key=lambda x: x[1])[0]
+            return self.base_model(best_n_component)
+        else:
+            return self.base_model(self.n_constant)
