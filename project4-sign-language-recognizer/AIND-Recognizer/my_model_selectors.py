@@ -100,7 +100,6 @@ class SelectorBIC(ModelSelector):
         else:
             return self.base_model(self.n_constant)
 
-
 class SelectorDIC(ModelSelector):
     ''' select best model based on Discriminative Information Criterion
 
@@ -117,39 +116,36 @@ class SelectorDIC(ModelSelector):
         # DONE implement model selection based on DIC scores
 
         n_components = range(self.min_n_components, self.max_n_components + 1)
-        M = len(n_components)
-
         scores_all = []
-        log_P_X_all = []
-        sum_log_P_X_all = 0
 
         for n_component in n_components:
             try:
-                # log(P(X(i))
-                log_P_X_i = self.base_model(n_component).score(self.X, self.lengths)
-
-                log_P_X_all.append(log_P_X_i)
-
-                # SUM(log(P(X(all but i))
-                sum_log_P_X_all += log_P_X_i
+                current_model = self.base_model(n_component)
+                X, lengths = self.hwords[self.this_word]
+                logL_all = current_model.score(X, lengths)
 
             except:
-                pass
+                continue
 
-        for log_P_X_i in log_P_X_all:
-            try:
-                score = log_P_X_i - 1/(M-1)*(sum_log_P_X_all-log_P_X_i)
-                scores_all.append(score)
+            antiLogL = 0
+            M = 0
+            for word in self.hwords:
+                if word != self.this_word:
+                    try:
+                        X, lengths = self.hwords[word]
+                        antiLogL += current_model.score(X, lengths)
+                        M += 1
 
-            except:
-                pass
+                    except:
+                        continue
+
+            scores_all.append(logL_all - 1/(M-1) * antiLogL)
 
         if scores_all:
             best_n_component = max(zip(n_components, scores_all), key=lambda x: x[1])[0]
             return self.base_model(best_n_component)
         else:
             return self.base_model(self.n_constant)
-
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
