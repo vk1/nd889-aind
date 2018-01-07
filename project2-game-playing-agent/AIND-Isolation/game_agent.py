@@ -35,7 +35,19 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    # raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    # Make own player very aggressive
+
+    return float(own_moves - 3*opp_moves)
 
 
 def custom_score_2(game, player):
@@ -61,7 +73,22 @@ def custom_score_2(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    # raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    blank_spaces = len(game.get_blank_spaces())
+    pct_blank_spaces = float(blank_spaces / (game.width * game.height))
+
+    # Make player more aggressive as game progresses (i.e. no. of blank spaces remaining decreases)
+
+    return float(own_moves - opp_moves / pct_blank_spaces)
 
 
 def custom_score_3(game, player):
@@ -87,8 +114,22 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    # raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
 
+    if game.is_winner(player):
+        return float("inf")
+
+    own_location = game.get_player_location(player)
+    opp_location = game.get_player_location(game.get_opponent(player))
+
+    if None in (own_location, opp_location):
+        return 0
+
+    else:
+        # Score by Manhattan distance between two players
+        return float(abs(own_location[0]-opp_location[0]) + abs(own_location[1]) - abs(opp_location[1]))
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
@@ -217,8 +258,17 @@ class MinimaxPlayer(IsolationPlayer):
 
         # return game.get_legal_moves()[0]
         # return self.minimax_decision(game, depth)
-        return max(game.get_legal_moves(),
-                   key=lambda a: self.min_value(game.forecast_move(a), depth - 1))
+        # best_move = (-1, -1)
+        if not game.get_legal_moves():
+            return (-1, -1)
+        best_move = game.get_legal_moves()[0]
+
+        moves = game.get_legal_moves()
+
+        if moves:
+            return max(moves, key=lambda a: self.min_value(game.forecast_move(a), depth - 1))
+        else:
+            return best_move
 
     def terminal_test(self, game):
         """ Return True if the game is over for the active player
@@ -386,7 +436,11 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         # return game.get_legal_moves()[0]
 
-        best_move = (-1, -1)
+        # best_move = (-1, -1)
+        if not game.get_legal_moves():
+            return (-1, -1)
+        best_move = game.get_legal_moves()[0]
+
         best_score = float("-inf")
 
         if depth == 0:
